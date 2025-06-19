@@ -95,7 +95,7 @@ class Disentangled_MHSA(nn.Module):
     mask=torch.zeros((seq,seq))
     for i in range(seq):
       for j in range(seq):
-        if (j<i):
+        if (j<=i):
           mask[i][j]= 1
     attention_scores = attention_scores.masked_fill_(mask==0, -1e9)
 
