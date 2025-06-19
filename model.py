@@ -66,6 +66,7 @@ class Layernorm(nn.Module):
     std = x.std(-1, keepdim=True)   #(batch, seq, 1)
 
     x = self.alpha*(x-mean)/ (self.eps+ std) + self.beta
+    return x
 
 #Disentangled Multi-head Self Attention
 class Disentangled_MHSA(nn.Module):
