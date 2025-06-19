@@ -8,14 +8,6 @@ import numpy, pandas
 import matplotlib.pyplot as plt
 import math
 
-#Hyperparameters
-T = 128          #Length of Markov Chain
-S = 5           #Number of states in the markov chain
-M = 128          #Max position for RPE
-
-num_epochs = 10000
-lr=0.001
-batch_size = 64
 
 #OneHot Embedding
 class OneHotEmbed(nn.Module):
