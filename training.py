@@ -1,3 +1,13 @@
+#importing the Induction transformer
+from model import OneHotEmbed, InductionHead
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+import numpy, pandas
+import matplotlib.pyplot as plt
+import math
+
 #Generating the data
 class MarkovChain:
   
@@ -74,6 +84,19 @@ class MarkovChain:
         return next_state
 
 
+#Hyperparameters
+T = 128          #Length of Markov Chain
+S = 5           #Number of states in the markov chain
+M = 128          #Max position for RPE
+
+num_epochs = 10000
+lr=0.001
+batch_size = 64
+order = 1
+vocab_size = S
+device = 'cpu'
+
+
 induction_transformer=InductionHead(S,2,2,M,S)                   #Initialization
 criterion=nn.CrossEntropyLoss()                                  #Loss Function
 optimizer=optim.Adam(induction_transformer.parameters(), lr=lr)    #Optimizer
@@ -88,9 +111,7 @@ ax.set_xlabel('Epoch')
 ax.set_ylabel('Loss')
 
 
-order = 1
-vocab_size = S
-device = 'cpu'
+
 
 mc = MarkovChain(order, vocab_size, device, t_matrix_in_context=True)
 
