@@ -1,3 +1,5 @@
+
+import torch
 #importing the Induction transformer
 from model import OneHotEmbed, InductionHead
 import torch
@@ -7,10 +9,29 @@ import torch.optim as optim
 import numpy, pandas
 import matplotlib.pyplot as plt
 import math
-import wandb
+
+class Bigram:
+  def __init__(self, vocab_size, T):
+    self.vocab_size=vocab_size
+    self.T=T
+
+  def __call__(self, x):
+    batch_size, T= x.shape
+    bigram_counts=torch.zeros((batch_size, T, self.vocab_size), device='cuda')
+    for t in range(0, T):
+      prefix = x[:, :t+1]
+      for b in range(batch_size):
+        current_state=prefix[b, -1]
+        following_tokens=[]
+        for i in range(t):
+          if (prefix[b, i]==current_state):
+            following_tokens.append(prefix[b, i+1])
+        counts=torch.bincount(torch.tensor(following_tokens, dtype=torch.long), minlength=self.vocab_size).float()
+        total=counts.sum()
+        bigram_counts[b, t]= (counts+1)/(total+ 5)  if total > 0 else counts
+    return bigram_counts
 
 
-#Generating the data
 class MarkovChain:
   
     def __init__(self, order, vocab_size, device, transition_matrix=None, start = None, t_matrix_in_context = False,  dirichlet_alpha=None):
@@ -86,71 +107,46 @@ class MarkovChain:
         return next_state
 
 
-#Hyperparameters
-T = 128          #Length of Markov Chain
-S = 5           #Number of states in the markov chain
-M = 128          #Max position for RPE
-
-num_epochs = 10000
-lr=0.005
-batch_size = 64
 order = 1
+S = 5           #Number of states in the markov chain
 vocab_size = S
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = 'cuda'
+batch_size=100
+T = 128          #Length of Markov Chain
+M = 128
+
+mc = MarkovChain(order, vocab_size, device, t_matrix_in_context=True)
+data = mc.get_batch(seq_length=T+1, batch_size=batch_size, initial='steady')
+src_data = data[:, :-1]  # (batch, T) - we are resitrciting it till T-1 steps
+tgt_data = data[:, 1:]   # (batch, T) — next tokens from 1 to T (left shifted)
+
+
+
+from model import InductionHead                                  #pre-defined model
+
+induction_transformer=InductionHead(S,2,2,M,S)                   #Initialization
+criterion=nn.CrossEntropyLoss()                                  #Loss Function
+#optimizer=optim.Adam(induction_transformer.parameters(), lr=lr)    #Optimizer
 checkpoint = torch.load("checkpoint.pt", map_location="cuda" if torch.cuda.is_available() else "cpu")
 print(checkpoint.keys())
 
-
-induction_transformer=InductionHead(S,2,2,M,S).to(device)        #Initialization
-criterion=nn.CrossEntropyLoss()                                  #Loss Function
-optimizer=optim.Adam(induction_transformer.parameters(), lr=lr)    #Optimizer
 induction_transformer.load_state_dict(checkpoint["model_state_dict"])
-induction_transformer.to(device)
-
-induction_transformer.train()
+induction_transformer.to(device)  # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+induction_transformer.eval()
 train_losses = []
 
-mc = MarkovChain(order, vocab_size, device, t_matrix_in_context=True)
-
-wandb.init(
-    project="induction-transformer",  # name of your project
-    config={
-        "learning_rate": lr,
-        "epochs": num_epochs,
-        "batch_size": batch_size,
-        "order": order,
-        "vocab_size": vocab_size,
-        "sequence_length": T,
-        "device": device,
-    }
-)
-
-
-for epoch in range(num_epochs):
-  data = mc.get_batch(seq_length=T+1, batch_size=batch_size, initial='steady').to(device)
-  src_data = data[:, :-1]  # (batch, T) - we are resitrciting it till T-1 steps
-  tgt_data = data[:, 1:]   # (batch, T) — next tokens from 1 to T (left shifted)
-  src_data = OneHotEmbed(S)(src_data)
-  optimizer.zero_grad()
-  output=induction_transformer(src_data)
-  loss = criterion(
+bigram=Bigram(S,T)(src_data)
+print(bigram.shape)
+print(tgt_data.shape)
+src_data = OneHotEmbed(S)(src_data)
+output=induction_transformer(src_data)
+loss_transformer= criterion(
         output.contiguous().view(-1, S),      # logits
         tgt_data.contiguous().view(-1)        # true next token
-    )
-  loss.backward()
-  optimizer.step()
-
-  # Log to wandb
-  wandb.log({"loss": loss.item(), "epoch": epoch})
-  
-  if epoch%100==0:
-    print(f"Iteration:{epoch}. Loss:{loss.item()}")
-
-  #print(f"Epoch: {epoch+1}, Loss: {loss.item()}")
-torch.save(induction_transformer.state_dict(), "induction_transformer.pt")
-torch.save({
-    'model_state_dict': induction_transformer.state_dict(),
-    'optimizer_state_dict': optimizer.state_dict()
-}, "checkpoint.pt")
-
-wandb.finish()
+)
+loss_bigram= criterion(
+        bigram.contiguous().view(-1, S),      # logits
+        tgt_data.contiguous().view(-1)        # true next token
+)
+print(f"Transformer Loss:{loss_transformer.item()}")
+print(f"Bigram Loss:{loss_bigram.item()}")

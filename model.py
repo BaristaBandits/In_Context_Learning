@@ -35,6 +35,8 @@ class RPE(nn.Module):
 
     embedding_indices = (-dist_matrix.clamp(min=-self.max_position, max=-1)).long() - 1      # This maps -1=> 0, -2=> 1 and so on to navigate the look up table
 
+    
+    embedding_indices=embedding_indices.to(device='cuda')
     #Zero out future positions and beyond max_position (inf before softmax)
     mask=(dist_matrix.abs()>=self.max_position) | (dist_matrix>=0)
     RP_embed=self.relative_embedding(embedding_indices)                                      #navigates to the look up table and replaces it with embedding learnt
@@ -84,7 +86,7 @@ class Disentangled_MHSA(nn.Module):
     attention_scores = (query @ key.transpose(-2,-1))/math.sqrt(d_k)                      # dimension = (batch_size, num_heads, T , T)
 
     #applying causal mask
-    mask=torch.zeros((seq,seq))
+    mask=torch.zeros((seq,seq)).to(device='cuda')
     for i in range(seq):
       for j in range(seq):
         if (j<=i):

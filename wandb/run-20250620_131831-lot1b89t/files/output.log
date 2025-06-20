@@ -1,0 +1,70 @@
+Iteration:0. Loss:1.4260560274124146
+Iteration:100. Loss:1.440553069114685
+Iteration:200. Loss:1.421694040298462
+Iteration:300. Loss:1.4252630472183228
+Iteration:400. Loss:1.415534257888794
+Iteration:500. Loss:1.434632658958435
+Iteration:600. Loss:1.4313784837722778
+Iteration:700. Loss:1.4082660675048828
+Iteration:800. Loss:1.4294114112854004
+Iteration:900. Loss:1.417572021484375
+Iteration:1000. Loss:1.4494621753692627
+Iteration:1100. Loss:1.4185559749603271
+Iteration:1200. Loss:1.4189255237579346
+Iteration:1300. Loss:1.4246587753295898
+Iteration:1400. Loss:1.4073289632797241
+Iteration:1500. Loss:1.42210853099823
+Iteration:1600. Loss:1.4401271343231201
+Iteration:1700. Loss:1.411254644393921
+Iteration:1800. Loss:1.4213947057724
+Iteration:1900. Loss:1.4086887836456299
+Iteration:2000. Loss:1.433787226676941
+Iteration:2100. Loss:1.4178987741470337
+Iteration:2200. Loss:1.4061462879180908
+Iteration:2300. Loss:1.4170790910720825
+Iteration:2400. Loss:1.4347460269927979
+Iteration:2500. Loss:1.4173784255981445
+Iteration:2600. Loss:1.4166876077651978
+Iteration:2700. Loss:1.4419447183609009
+Iteration:2800. Loss:1.4494551420211792
+Iteration:2900. Loss:1.4226558208465576
+Iteration:3000. Loss:1.3974183797836304
+Iteration:3100. Loss:1.4267977476119995
+Iteration:3200. Loss:1.4239643812179565
+Iteration:3300. Loss:1.4404796361923218
+Iteration:3400. Loss:1.451302170753479
+Iteration:3500. Loss:1.4295140504837036
+Iteration:3600. Loss:1.4080328941345215
+Iteration:3700. Loss:1.4415855407714844
+Traceback (most recent call last):
+  File "/tmlscratch/narashim/In_Context_Learning/training.py", line 135, in <module>
+    output=induction_transformer(src_data)
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 158, in forward
+    x = self.res2(x, lambda x_: self.attn2(x, x, x))                               #(batch, T , S*(1+num_heads1)*(1+num_heads2))
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 138, in forward
+    output= self.dropout(sublayer(self.layernorm(x)))    # Note: Pre-norm is applied before passing it through the layer for training stability
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 158, in <lambda>
+    x = self.res2(x, lambda x_: self.attn2(x, x, x))                               #(batch, T , S*(1+num_heads1)*(1+num_heads2))
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 121, in forward
+    output, self.attention_scores = self.attention(query, key, value, dropout =0.0)        #x.shape = (batch, num_heads, T, S)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 98, in attention
+    rpe=self.RPE(seq)
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 34, in forward
+    dist_matrix[i][j]= j-i
+KeyboardInterrupt

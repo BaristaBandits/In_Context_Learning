@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "/tmlscratch/narashim/In_Context_Learning/training.py", line 131, in <module>
+    output=induction_transformer(src_data)
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 154, in forward
+    x = self.res1(x, lambda x_: self.attn1(x, x, x))                               #(batch, T , S*(1+num_heads1))
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 136, in forward
+    output= self.dropout(sublayer(self.layernorm(x)))    # Note: Pre-norm is applied before passing it through the layer for training stability
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 154, in <lambda>
+    x = self.res1(x, lambda x_: self.attn1(x, x, x))                               #(batch, T , S*(1+num_heads1))
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/runai-home/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 119, in forward
+    output, self.attention_scores = self.attention(query, key, value, dropout =0.0)        #x.shape = (batch, num_heads, T, S)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 92, in attention
+    attention_scores = attention_scores.masked_fill_(mask==0, -1e9)
+RuntimeError: expected self and mask to be on the same device, but got mask on cpu and self on cuda:0
