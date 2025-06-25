@@ -1,0 +1,8 @@
+Transformer Loss:1.425352931022644
+Bigram Loss:1.4022369384765625
+
+KL Divergence Results
+
+KL Divergence Transformer:0.14905907213687897
+KL Divergence Bigram:0.12638063728809357
+KL Divergence Transformer Bigram:0.022867685183882713

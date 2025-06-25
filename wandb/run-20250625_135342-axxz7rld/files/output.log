@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/tmlscratch/narashim/In_Context_Learning/training.py", line 195, in <module>
+    save_dir = os.path.join("runs", save_chkpt)
+NameError: name 'os' is not defined

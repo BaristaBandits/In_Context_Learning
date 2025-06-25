@@ -8,8 +8,9 @@ import numpy, pandas
 import matplotlib.pyplot as plt
 import math
 import wandb
-
-
+import argparse
+import json
+import os
 #Generating the data
 class MarkovChain:
   
@@ -86,32 +87,96 @@ class MarkovChain:
         return next_state
 
 
-#Hyperparameters
-T = 128          #Length of Markov Chain
-S = 5           #Number of states in the markov chain
-M = 128          #Max position for RPE
+def initialize_weights(model, init_config=None):
+    def apply_init(tensor, init_type, param):
+        if init_type == 'default':
+            return  
+        elif init_type == 'uniform':
+            nn.init.uniform_(tensor, -param, param)
+        elif init_type == 'normal':
+            nn.init.normal_(tensor, mean=0.0, std=param)
+        elif init_type == 'constant':
+            nn.init.constant_(tensor, param)
+        else:
+            raise ValueError(f"Unknown init_type: {init_type}")
 
-num_epochs = 10000
-lr=0.005
-batch_size = 64
-order = 1
-vocab_size = S
+    if init_config is None:
+        return  
+
+    # Initialize Disentangled_MHSA layers
+    for attn in [model.attn1, model.attn2]:
+        if 'qk' in init_config:
+            init_type, param = init_config['qk']
+            apply_init(attn.w_q.weight, init_type, param)
+            apply_init(attn.w_k.weight, init_type, param)
+
+        if 'v' in init_config:
+            init_type, param = init_config['v']
+            apply_init(attn.w_v.weight, init_type, param)
+
+    # Initialize final output projection
+    if 'output_proj' in init_config:
+        init_type, param = init_config['output_proj']
+        apply_init(model.w_o.weight, init_type, param)
+        if model.w_o.bias is not None:
+            nn.init.zeros_(model.w_o.bias)
+
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-checkpoint = torch.load("checkpoint.pt", map_location="cuda" if torch.cuda.is_available() else "cpu")
-print(checkpoint.keys())
 
 
-induction_transformer=InductionHead(S,2,2,M,S).to(device)        #Initialization
+#Hyperparameters
+parser=argparse.ArgumentParser(description="Train an Induction Transformer on a Markov Chain")
+parser.add_argument('--T', type=int, default=128, help='Length of Markov chain : default 128')
+parser.add_argument('--S', type=int, default = 5, help='Number of states in a Markov Chain: default 5')
+parser.add_argument('--M', type=int, default=128, help='Number of past instances in RPE')
+parser.add_argument('--num_epochs', type=int, default=1000000, help='Number of training iterations')
+parser.add_argument('--lr', type=float, default=0.001, help='Learning rate')
+parser.add_argument('--batch_size', type=int, default=64, help='Batch Size')
+parser.add_argument('--order', type=int, default=1, help='Order of markov chain')
+parser.add_argument('--checkpolint', type=str, default="checkpoint.pt", help='Checkpoint to be loaded')
+parser.add_argument('--load_checkpoint', action='store_true', help='Whether to load model from checkpoint')
+parser.add_argument('--initialize', type=str, default=None, help="Method of initializing the weights JSON string" )
+parser.add_argument('--save_chkpt', type=str, default="run1.pt", help="path to store the checkpoint")
+args = parser.parse_args()
+
+T = args.T
+S = args.S
+M = args.M
+num_epochs = args.num_epochs
+lr = args.lr
+batch_size = args.batch_size
+order = args.order
+vocab_size = S
+initialize=args.initialize
+save_chkpt=args.save_chkpt
+
+if args.initialize:
+    initialize = json.loads(args.initialize)
+    print(initialize)
+
+induction_transformer=InductionHead(S,1,1,M,S).to(device)        #Initialization
 criterion=nn.CrossEntropyLoss()                                  #Loss Function
 optimizer=optim.Adam(induction_transformer.parameters(), lr=lr)    #Optimizer
-induction_transformer.load_state_dict(checkpoint["model_state_dict"])
+
+#Initialize weights
+initialize_weights(induction_transformer, initialize)
+#Loading from checkpoint
+if args.load_checkpoint:
+    try:
+        checkpoint = torch.load(args.checkpoint_path, map_location="cuda" if torch.cuda.is_available() else "cpu")
+        induction_transformer.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        print(f"Loaded model and optimizer from {args.checkpoint_path}")
+    except FileNotFoundError:
+        print(f"Checkpoint file {args.checkpoint_path} not found. Training from scratch.")
+
 induction_transformer.to(device)
-
 induction_transformer.train()
-train_losses = []
 
-mc = MarkovChain(order, vocab_size, device, t_matrix_in_context=True)
 
+
+#report to wandb
 wandb.init(
     project="induction-transformer",  # name of your project
     config={
@@ -122,10 +187,15 @@ wandb.init(
         "vocab_size": vocab_size,
         "sequence_length": T,
         "device": device,
+        "initialize": initialize,
     }
 )
 
+mc = MarkovChain(order, vocab_size, device, t_matrix_in_context=True)
+save_dir = os.path.join("runs", save_chkpt)
+os.makedirs(save_dir, exist_ok=True)
 
+#Training
 for epoch in range(num_epochs):
   data = mc.get_batch(seq_length=T+1, batch_size=batch_size, initial='steady').to(device)
   src_data = data[:, :-1]  # (batch, T) - we are resitrciting it till T-1 steps
@@ -147,10 +217,20 @@ for epoch in range(num_epochs):
     print(f"Iteration:{epoch}. Loss:{loss.item()}")
 
   #print(f"Epoch: {epoch+1}, Loss: {loss.item()}")
-torch.save(induction_transformer.state_dict(), "induction_transformer.pt")
+  # Save checkpoint every 10,000 steps
+  if epoch % 10000 == 0 and epoch != 0:
+        
+        checkpoint_path = os.path.join(save_dir, f"checkpoint_{epoch}.pth")
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': induction_transformer.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict()
+        }, checkpoint_path)
+        print(f"Checkpoint saved at step {epoch} -> {checkpoint_path}")
+
 torch.save({
     'model_state_dict': induction_transformer.state_dict(),
     'optimizer_state_dict': optimizer.state_dict()
-}, "checkpoint.pt")
+}, save_chkpt)
 
 wandb.finish()

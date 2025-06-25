@@ -1,0 +1,7 @@
+{"time":"2025-06-25T08:58:45.961474474Z","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/tmlscratch/narashim/In_Context_Learning/wandb/run-20250625_085845-iezdvrg2/logs/debug-core.log"}
+{"time":"2025-06-25T08:58:46.290635252Z","level":"INFO","msg":"stream: created new stream","id":"iezdvrg2"}
+{"time":"2025-06-25T08:58:46.290706075Z","level":"INFO","msg":"stream: started","id":"iezdvrg2"}
+{"time":"2025-06-25T08:58:46.290733037Z","level":"INFO","msg":"sender: started","stream_id":"iezdvrg2"}
+{"time":"2025-06-25T08:58:46.290733733Z","level":"INFO","msg":"writer: Do: started","stream_id":"iezdvrg2"}
+{"time":"2025-06-25T08:58:46.290781399Z","level":"INFO","msg":"handler: started","stream_id":"iezdvrg2"}
+{"time":"2025-06-25T08:58:46.632257706Z","level":"INFO","msg":"Starting system monitor"}

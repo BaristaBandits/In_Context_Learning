@@ -1,0 +1,8 @@
+{"time":"2025-06-25T09:03:41.008770909Z","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/tmlscratch/narashim/In_Context_Learning/wandb/run-20250625_090340-v7w5k6o5/logs/debug-core.log"}
+{"time":"2025-06-25T09:03:41.292443806Z","level":"INFO","msg":"stream: created new stream","id":"v7w5k6o5"}
+{"time":"2025-06-25T09:03:41.292507887Z","level":"INFO","msg":"stream: started","id":"v7w5k6o5"}
+{"time":"2025-06-25T09:03:41.292537336Z","level":"INFO","msg":"writer: Do: started","stream_id":"v7w5k6o5"}
+{"time":"2025-06-25T09:03:41.292549666Z","level":"INFO","msg":"sender: started","stream_id":"v7w5k6o5"}
+{"time":"2025-06-25T09:03:41.292631027Z","level":"INFO","msg":"handler: started","stream_id":"v7w5k6o5"}
+{"time":"2025-06-25T09:03:41.575716773Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-06-25T14:28:11.951530486Z","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": read tcp 172.16.2.106:59526->35.186.228.49:443: read: connection reset by peer"}
