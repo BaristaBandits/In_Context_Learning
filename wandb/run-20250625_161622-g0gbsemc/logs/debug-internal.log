@@ -1,0 +1,11 @@
+{"time":"2025-06-25T16:16:23.088339204Z","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/tmlscratch/narashim/In_Context_Learning/wandb/run-20250625_161622-g0gbsemc/logs/debug-core.log"}
+{"time":"2025-06-25T16:16:23.364734595Z","level":"INFO","msg":"stream: created new stream","id":"g0gbsemc"}
+{"time":"2025-06-25T16:16:23.364773297Z","level":"INFO","msg":"stream: started","id":"g0gbsemc"}
+{"time":"2025-06-25T16:16:23.364804726Z","level":"INFO","msg":"writer: Do: started","stream_id":"g0gbsemc"}
+{"time":"2025-06-25T16:16:23.364823491Z","level":"INFO","msg":"sender: started","stream_id":"g0gbsemc"}
+{"time":"2025-06-25T16:16:23.364819844Z","level":"INFO","msg":"handler: started","stream_id":"g0gbsemc"}
+{"time":"2025-06-25T16:16:23.576038074Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-06-26T02:29:42.180794089Z","level":"INFO","msg":"api: retrying HTTP error","status":429,"url":"https://api.wandb.ai/files/rudhranarashiman-225-indian-institute-of-technology-madras/Experiments%20Induction%20Transformer/g0gbsemc/file_stream","body":"{\"error\":\"rate limit exceeded\"}"}
+{"time":"2025-06-26T02:29:46.656909224Z","level":"INFO","msg":"api: retrying HTTP error","status":429,"url":"https://api.wandb.ai/files/rudhranarashiman-225-indian-institute-of-technology-madras/Experiments%20Induction%20Transformer/g0gbsemc/file_stream","body":"{\"error\":\"rate limit exceeded\"}"}
+{"time":"2025-06-26T02:29:51.276188156Z","level":"INFO","msg":"api: retrying HTTP error","status":429,"url":"https://api.wandb.ai/files/rudhranarashiman-225-indian-institute-of-technology-madras/Experiments%20Induction%20Transformer/g0gbsemc/file_stream","body":"{\"error\":\"rate limit exceeded\"}"}
+{"time":"2025-06-26T02:30:01.355328215Z","level":"INFO","msg":"api: retrying HTTP error","status":429,"url":"https://api.wandb.ai/files/rudhranarashiman-225-indian-institute-of-technology-madras/Experiments%20Induction%20Transformer/g0gbsemc/file_stream","body":"{\"error\":\"rate limit exceeded\"}"}

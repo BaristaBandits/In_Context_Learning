@@ -178,7 +178,7 @@ induction_transformer.train()
 
 #report to wandb
 wandb.init(
-    project="induction-transformer",  # name of your project
+    project="Experiments Induction Transformer",  # name of your project
     config={
         "learning_rate": lr,
         "epochs": num_epochs,
