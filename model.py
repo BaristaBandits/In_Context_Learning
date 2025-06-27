@@ -31,15 +31,15 @@ class RPE(nn.Module):
     dist_matrix=torch.zeros((seq,seq))
     for i in range(seq):
       for j in range(seq):
-        dist_matrix[i][j]= j-i
+        dist_matrix[i][j]= i-j
 
-    embedding_indices = (-dist_matrix.clamp(min=-self.max_position, max=-1)).long() - 1      # This maps -1=> 0, -2=> 1 and so on to navigate the look up table
+    embedding_indices = (dist_matrix.clamp(min=0, max=self.max_position -1)).long()           # This maps -1=> 0, -2=> 1 and so on to navigate the look up table
 
     
     embedding_indices=embedding_indices.to(device='cuda')
     #Zero out future positions and beyond max_position (inf before softmax)
-    mask=(dist_matrix.abs()>=self.max_position) | (dist_matrix>=0)
-    RP_embed=self.relative_embedding(embedding_indices)                                      #navigates to the look up table and replaces it with embedding learnt
+    mask=(dist_matrix.abs()>=self.max_position - 1) | (dist_matrix<0)
+    RP_embed=self.relative_embedding(embedding_indices)                                       # navigates to the look up table and replaces it with embedding learnt
     RP_embed[mask]=-1e9
 
     return RP_embed
@@ -71,19 +71,12 @@ class Disentangled_MHSA(nn.Module):
     self.num_heads=num_heads                                                              #number of heads - subject to change in each layer
     self.RPE = RPE(max_position)
 
-    self.w_q = nn.Linear(d_model, num_heads*d_model, bias=False)
-    self.w_v= nn.Linear(d_model, num_heads*d_model, bias= False)
-    self.w_k = nn.Linear(d_model, num_heads* d_model, bias=False)
+    self.w_a=nn.Parameter(torch.zeros(num_heads, d_model, d_model))
+    
 
-    #No output projection matrix here becasue we are concatentating the heads
-
-    #self.dropout = nn.Dropout(dropout) - Check if we need dropout here ?
-
-
-  def attention(self, query, key, value, dropout:nn.Dropout):                             # Mask : Causal attention
-    d_k = query.shape[-1]
-    seq = query.shape[-2]
-    attention_scores = (query @ key.transpose(-2,-1))/math.sqrt(d_k)                      # dimension = (batch_size, num_heads, T , T)
+  def attention(self, attention_scores,  seq, value, dropout:nn.Dropout):                             # Mask : Causal attention
+    d_k = 1                                                                               # Fixing it to 1 to make the learning simpler
+    attention_scores = (attention_scores)/math.sqrt(d_k)                      # dimension = (batch_size, num_heads, T , T)
 
     #applying causal mask
     mask=torch.zeros((seq,seq)).to(device='cuda')
@@ -96,7 +89,6 @@ class Disentangled_MHSA(nn.Module):
 
     #Adding RPE here
     rpe=self.RPE(seq)
-    #print(attention_scores.shape)
     rpe=rpe.to(attention_scores.device)
     rpe=rpe.squeeze(-1)
     rpe=rpe.unsqueeze(0).unsqueeze(0)
@@ -106,24 +98,24 @@ class Disentangled_MHSA(nn.Module):
     #softmax
     attention_scores_softmax = attention_scores_rpe.softmax(dim=-1)
 
-    #Should we drop out attention score ?
     return (attention_scores_softmax@value), attention_scores_rpe                                    #(batch, num_heads, T, S)
 
 
-  def forward(self, q,k,v):
-    query = self.w_q(q)                                                                   #q = (batch, T, S) --> query = (batch, T, num_heads*S)
-    key = self.w_k(k)
-    value = self.w_v(v)
-
-    query =query.view(query.shape[0], query.shape[1], self.num_heads,self.d_model).transpose(1,2)       #(batch, T, num_heads*S) -->  (batch, T, num_heads, S) --> (batch, num_heads, T,  S)
-    key = key.view(key.shape[0], key.shape[1], self.num_heads,self.d_model).transpose(1,2)
+  def forward(self, x):
+    seq= x.shape[-2]
+    #print(seq)
+    value = x.repeat(1, 1, self.num_heads)                                                #Identity projection for all the heads
+    x = x.repeat(1, 1, self.num_heads)                                                    # Each head sees the same input (batch, T, num_heads*S)
+    a = self.w_a.unsqueeze(0)
+    x = x.view(x.shape[0], x.shape[1], self.num_heads,self.d_model).transpose(1,2)                       #(batch, T, num_heads*S) -->  (batch, T, num_heads, S) --> (batch, num_heads, T,  S)
+    x_a = torch.matmul(x,a)
+    attention_scores= torch.matmul(x_a, x.transpose(-1,-2))
     value = value.view(value.shape[0], value.shape[1], self.num_heads,self.d_model).transpose(1,2)
-    output, self.attention_scores = self.attention(query, key, value, dropout =0.0)        #x.shape = (batch, num_heads, T, S)
+    output, self.attention_scores = self.attention(attention_scores, seq, value,  dropout =0.0)        #x.shape = (batch, num_heads, T, S)
 
     #concatenating to return
     output = output.permute(0, 2, 1, 3)                                                                 #x.shape = (batch, T, num_heads, S)
     output = output.reshape(output.shape[0], output.shape[1], self.num_heads*self.d_model)              #x.shape = (batch, T, num_heads*S)
-    #print('attention output', output.shape)
     return output
 
 #Residual Connection
@@ -153,12 +145,13 @@ class InductionHead(nn.Module):
 
   def forward(self, x):
     #print(x.shape)
-    x = self.res1(x, lambda x_: self.attn1(x, x, x))                               #(batch, T , S*(1+num_heads1))
+    x = self.res1(x, lambda x_: self.attn1(x))                               #(batch, T , S*(1+num_heads1))
     #print(x.shape)
-    x = self.res2(x, lambda x_: self.attn2(x, x, x))                               #(batch, T , S*(1+num_heads1)*(1+num_heads2))
+    x = self.res2(x, lambda x_: self.attn2(x))                               #(batch, T , S*(1+num_heads1)*(1+num_heads2))
     #print(x.shape)
     logits = self.w_o(x)                                                                 #(batch, T, S)
     #probabs = F.softmax(logits, dim=-1)
    # prediction = probabs.agrmax(dim=-1)                                                  #(batch, T)
     return logits
+
 
