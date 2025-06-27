@@ -101,13 +101,13 @@ class Disentangled_MHSA(nn.Module):
     rpe=rpe.squeeze(-1)
     rpe=rpe.unsqueeze(0).unsqueeze(0)
     #print(rpe.shape)
-    attention_scores=attention_scores+rpe
+    attention_scores_rpe=attention_scores+rpe
 
     #softmax
-    attention_scores = attention_scores.softmax(dim=-1)
+    attention_scores_softmax = attention_scores_rpe.softmax(dim=-1)
 
     #Should we drop out attention score ?
-    return (attention_scores@value), attention_scores                                     #(batch, num_heads, T, S)
+    return (attention_scores_softmax@value), attention_scores_rpe                                    #(batch, num_heads, T, S)
 
 
   def forward(self, q,k,v):

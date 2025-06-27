@@ -1,0 +1,52 @@
+{
+  "os": "Linux-6.8.0-59-generic-x86_64-with-glibc2.35",
+  "python": "CPython 3.10.18",
+  "startedAt": "2025-06-26T15:24:14.345884Z",
+  "args": [
+    "--initialize",
+    "{\"qk\":[\"default\",0],\"v\":[\"normal\",0.05],\"output_proj\":[\"constant\",0.1]}",
+    "--save_chkpt",
+    "run_mixed.pt",
+    "--load_checkpoint",
+    "--checkpoint",
+    "/tmlscratch/narashim/In_Context_Learning/runs/run_mixed.pt/checkpoint_200000.pth"
+  ],
+  "program": "/tmlscratch/narashim/In_Context_Learning/training.py",
+  "codePath": "training.py",
+  "git": {
+    "remote": "https://github.com/BaristaBandits/In_Context_Learning.git",
+    "commit": "3d9515fe9d4d49dfe4bb0184d13a691f055b81c0"
+  },
+  "email": "rudhranarashiman.225@gmail.com",
+  "root": "/tmlscratch/narashim/In_Context_Learning",
+  "host": "train-67ef177f5687-0-0",
+  "executable": "/tmlscratch/narashim/miniconda3/envs/myenv/bin/python",
+  "codePathLocal": "training.py",
+  "cpu_count": 64,
+  "cpu_count_logical": 128,
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "7679362727936",
+      "used": "4608306274304"
+    }
+  },
+  "memory": {
+    "total": "1081885048832"
+  },
+  "cpu": {
+    "count": 64,
+    "countLogical": 128
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA A100-SXM4-80GB",
+      "memoryTotal": "85899345920",
+      "cudaCores": 6912,
+      "architecture": "Ampere",
+      "uuid": "GPU-2fdc7af3-1234-ee6a-7e04-8c7224fc96a1"
+    }
+  ],
+  "cudaVersion": "12.6"
+}

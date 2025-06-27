@@ -1,0 +1,26 @@
+Iteration:0. Training Loss:1.6090937852859497 . Validation Loss:1.6090937852859497
+Traceback (most recent call last):
+  File "/tmlscratch/narashim/In_Context_Learning/training.py", line 218, in <module>
+    output=induction_transformer(src_data)
+  File "/tmlscratch/narashim/miniconda3/envs/myenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/tmlscratch/narashim/miniconda3/envs/myenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 156, in forward
+    x = self.res1(x, lambda x_: self.attn1(x, x, x))                               #(batch, T , S*(1+num_heads1))
+  File "/tmlscratch/narashim/miniconda3/envs/myenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/tmlscratch/narashim/miniconda3/envs/myenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 138, in forward
+    output= self.dropout(sublayer(self.layernorm(x)))    # Note: Pre-norm is applied before passing it through the layer for training stability
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 156, in <lambda>
+    x = self.res1(x, lambda x_: self.attn1(x, x, x))                               #(batch, T , S*(1+num_heads1))
+  File "/tmlscratch/narashim/miniconda3/envs/myenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/tmlscratch/narashim/miniconda3/envs/myenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line 121, in forward
+    output, self.attention_scores = self.attention(query, key, value, dropout =0.0)        #x.shape = (batch, num_heads, T, S)
+  File "/tmlscratch/narashim/In_Context_Learning/model.py", line -1, in attention
+KeyboardInterrupt

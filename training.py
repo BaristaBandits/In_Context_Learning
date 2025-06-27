@@ -134,10 +134,11 @@ parser.add_argument('--num_epochs', type=int, default=1000000, help='Number of t
 parser.add_argument('--lr', type=float, default=0.001, help='Learning rate')
 parser.add_argument('--batch_size', type=int, default=64, help='Batch Size')
 parser.add_argument('--order', type=int, default=1, help='Order of markov chain')
-parser.add_argument('--checkpolint', type=str, default="checkpoint.pt", help='Checkpoint to be loaded')
+parser.add_argument('--checkpoint', type=str, default="checkpoint.pt", help='Checkpoint to be loaded')
 parser.add_argument('--load_checkpoint', action='store_true', help='Whether to load model from checkpoint')
 parser.add_argument('--initialize', type=str, default=None, help="Method of initializing the weights JSON string" )
 parser.add_argument('--save_chkpt', type=str, default="run1.pt", help="path to store the checkpoint")
+parser.add_argument('--log_step', type=int, default=1000, help="validation log")
 args = parser.parse_args()
 
 T = args.T
@@ -150,24 +151,36 @@ order = args.order
 vocab_size = S
 initialize=args.initialize
 save_chkpt=args.save_chkpt
+log_step = args.log_step
 
 if args.initialize:
     initialize = json.loads(args.initialize)
     print(initialize)
 
+
+#Validation_data for testing
+mc = MarkovChain(order, vocab_size, device, t_matrix_in_context=True)
+data, transition_matrix = mc.get_batch(seq_length=T+1, batch_size=1000, initial='steady', return_ttensor=True)
+src_data_test = data[:, :-1]  # (batch, T) - we are resitrciting it till T-1 steps
+tgt_data_test = data[:, 1:]   # (batch, T) — next tokens from 1 to T (left shifted)
+src_data_test_onehot = OneHotEmbed(S)(src_data_test)
+#print(transition_matrix.shape)
+
 induction_transformer=InductionHead(S,1,1,M,S).to(device)        #Initialization
 criterion=nn.CrossEntropyLoss()                                  #Loss Function
 optimizer=optim.Adam(induction_transformer.parameters(), lr=lr)    #Optimizer
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10000, gamma=0.1)        #Scheduler
 
 #Initialize weights
 initialize_weights(induction_transformer, initialize)
+
 #Loading from checkpoint
 if args.load_checkpoint:
     try:
-        checkpoint = torch.load(args.checkpoint_path, map_location="cuda" if torch.cuda.is_available() else "cpu")
+        checkpoint = torch.load(args.checkpoint, map_location="cuda" if torch.cuda.is_available() else "cpu")
         induction_transformer.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        print(f"Loaded model and optimizer from {args.checkpoint_path}")
+        print(f"Loaded model and optimizer from {args.checkpoint}")
     except FileNotFoundError:
         print(f"Checkpoint file {args.checkpoint_path} not found. Training from scratch.")
 
@@ -209,12 +222,19 @@ for epoch in range(num_epochs):
     )
   loss.backward()
   optimizer.step()
-
+  scheduler.step()
   # Log to wandb
   wandb.log({"loss": loss.item(), "epoch": epoch})
   
-  if epoch%100==0:
-    print(f"Iteration:{epoch}. Loss:{loss.item()}")
+  if epoch%log_step==0:
+    validation_output=induction_transformer(src_data_test_onehot)
+    validation_loss= criterion(
+        output.contiguous().view(-1, S),      # logits
+        tgt_data.contiguous().view(-1)        # true next token
+    )
+    wandb.log({"Validation loss": validation_loss.item(), "epoch": epoch})
+    print(f"Iteration:{epoch}. Training Loss:{loss.item()} . Validation Loss:{validation_loss.item()}")
+
 
   #print(f"Epoch: {epoch+1}, Loss: {loss.item()}")
   # Save checkpoint every 10,000 steps

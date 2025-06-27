@@ -83,9 +83,11 @@ def plot_token_attention_per_head_xaxis(attn_scores_layer1, attn_scores_layer2, 
     head_info = [
         (attn_scores_layer1 if j==1 else attn_scores_layer2, i, f"Layer {j} - Head {i}") for j in range(1,3) for i in range(num_heads1) 
     ]
-    #print(head_info)
+    print(head_info)
 
     for ax, (attn_scores, head, title) in zip(axs, head_info):
+        print(attn_scores)
+        attn_scores[attn_scores<=-1e9]=0
         attention_weights = attn_scores[head, token_idx, :T].detach().cpu().numpy()
 
         # Normalize attention weights for color mapping
