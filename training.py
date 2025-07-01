@@ -230,7 +230,7 @@ for epoch in range(num_epochs):
     validation_output=induction_transformer(src_data_test_onehot)
     validation_loss= criterion(
         output.contiguous().view(-1, S),      # logits
-        tgt_data.contiguous().view(-1)        # true next token
+        tgt_data_test.contiguous().view(-1)        # true next token
     )
     wandb.log({"Validation loss": validation_loss.item(), "epoch": epoch})
     print(f"Iteration:{epoch}. Training Loss:{loss.item()} . Validation Loss:{validation_loss.item()}")
